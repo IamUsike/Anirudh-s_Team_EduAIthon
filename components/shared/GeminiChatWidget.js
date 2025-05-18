@@ -1,7 +1,7 @@
 // components/shared/GeminiChatWidget.js
 "use client";
 
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useRef, useEffect } from "react";
 
 export default function GeminiChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,7 +9,7 @@ export default function GeminiChatWidget() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const messagesEndRef = useRef(null); 
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,9 +27,9 @@ export default function GeminiChatWidget() {
 
     const newUserMessage = { role: "user", parts: [{ text: message }] };
 
-    const currentChatWithNewMessage = [...chatHistory, newUserMessage]; 
+    const currentChatWithNewMessage = [...chatHistory, newUserMessage];
 
-    setChatHistory(currentChatWithNewMessage); 
+    setChatHistory(currentChatWithNewMessage);
     setMessage("");
     setIsLoading(true);
     setError(null);
@@ -38,17 +38,24 @@ export default function GeminiChatWidget() {
       // Prepare history for the API.
       // Send all messages *except* the very last one (which is the current user's new message,
       // as that's passed separately in the 'message' field to the API)
-      const apiHistoryPayload = currentChatWithNewMessage.slice(0, -1).map(msg => ({ // ✅ USE IT HERE
-        role: msg.role,
-        parts: msg.parts.map(part => (typeof part.text === 'string' ? { text: part.text } : { text: String(part) })) // Ensure part.text
-      }));
+      const apiHistoryPayload = currentChatWithNewMessage
+        .slice(0, -1)
+        .map((msg) => ({
+          // ✅ USE IT HERE
+          role: msg.role,
+          parts: msg.parts.map((part) =>
+            typeof part.text === "string"
+              ? { text: part.text }
+              : { text: String(part) },
+          ), // Ensure part.text
+        }));
 
       const res = await fetch("/api/gemini-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            message: newUserMessage.parts[0].text, 
-            history: apiHistoryPayload             
+          message: newUserMessage.parts[0].text,
+          history: apiHistoryPayload,
         }),
       });
 
@@ -56,21 +63,36 @@ export default function GeminiChatWidget() {
         const errData = await res.json();
         console.error("Frontend received error from API:", errData);
         // Update chat history with the error message from the model's perspective
-        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Error: ${errData.error || errData.message || "API Error"}`}] }]);
-        throw new Error(errData.error || errData.message || "Failed to fetch response from API");
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            role: "model",
+            parts: [
+              {
+                text: `Error: ${errData.error || errData.message || "API Error"}`,
+              },
+            ],
+          },
+        ]);
+        throw new Error(
+          errData.error ||
+            errData.message ||
+            "Failed to fetch response from API",
+        );
       }
 
       const data = await res.json();
-      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: data.reply }] }]);
-
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "model", parts: [{ text: data.reply }] },
+      ]);
     } catch (err) {
-      console.error("Chat widget error:", err.message); 
-      setError(err.message); 
+      console.error("Chat widget error:", err.message);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const chatWidgetStyle = {
     position: "fixed",
@@ -92,12 +114,12 @@ export default function GeminiChatWidget() {
   };
 
   const chatHeaderStyle = {
-    padding: '10px 15px',
-    borderBottom: '1px solid #eee',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f7f7f7',
+    padding: "10px 15px",
+    borderBottom: "1px solid #eee",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f7f7f7",
   };
 
   const messagesContainerStyle = {
@@ -125,51 +147,50 @@ export default function GeminiChatWidget() {
     display: "flex",
     padding: "10px 15px",
     borderTop: "1px solid #eee",
-    backgroundColor: '#f7f7f7',
+    backgroundColor: "#f7f7f7",
   };
 
   const inputStyle = {
     flexGrow: 1,
     padding: "10px",
     marginRight: "10px",
-    border: '1px solid #ddd',
-    borderRadius: '20px',
-    outline: 'none',
+    border: "1px solid #ddd",
+    borderRadius: "20px",
+    outline: "none",
   };
 
   const buttonStyle = {
-    padding: '10px 20px',
-    background: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '20px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s ease',
+    padding: "10px 20px",
+    background: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "20px",
+    cursor: "pointer",
+    transition: "background-color 0.2s ease",
   };
 
   const toggleButtonStyle = {
-    ...chatWidgetStyle, 
-    padding: '12px 25px',
-    cursor: 'pointer',
-    background: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '50px',
-    fontSize: '1rem',
+    ...chatWidgetStyle,
+    padding: "12px 25px",
+    cursor: "pointer",
+    background: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "50px",
+    fontSize: "1rem",
     boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-    transition: 'transform 0.2s ease, background-color 0.2s ease',
+    transition: "transform 0.2s ease, background-color 0.2s ease",
   };
-
 
   if (!isOpen) {
     return (
       <button
         onClick={toggleChat}
         style={toggleButtonStyle}
-        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
+        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0056b3")}
+        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#007bff")}
       >
-        Chat with AI
+        ask Anirudh
       </button>
     );
   }
@@ -181,22 +202,38 @@ export default function GeminiChatWidget() {
           <strong>Anicodes AI Assistant</strong>
           <button
             onClick={toggleChat}
-            style={{background: 'none', border: 'none', fontSize: '1.5em', cursor: 'pointer', color: '#777'}}
-            onMouseOver={(e) => e.currentTarget.style.color = '#333'}
-            onMouseOut={(e) => e.currentTarget.style.color = '#777'}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: "1.5em",
+              cursor: "pointer",
+              color: "#777",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = "#333")}
+            onMouseOut={(e) => (e.currentTarget.style.color = "#777")}
           >
             ×
           </button>
         </div>
-        <div style={messagesContainerStyle}> {/* No ref needed here directly if child has ref */}
+        <div style={messagesContainerStyle}>
+          {" "}
+          {/* No ref needed here directly if child has ref */}
           {chatHistory.map((msg, index) => (
             <div key={index} style={messageBubbleStyle(msg.role)}>
               {/* Ensure msg.parts is an array and part.text exists */}
-              {Array.isArray(msg.parts) ? msg.parts.map(part => part.text || '').join("") : ''}
+              {Array.isArray(msg.parts)
+                ? msg.parts.map((part) => part.text || "").join("")
+                : ""}
             </div>
           ))}
           {isLoading && (
-            <div style={{ ...messageBubbleStyle('model'), backgroundColor: '#f0f0f0', alignSelf: 'flex-start' }}>
+            <div
+              style={{
+                ...messageBubbleStyle("model"),
+                backgroundColor: "#f0f0f0",
+                alignSelf: "flex-start",
+              }}
+            >
               Thinking...
             </div>
           )}
@@ -211,14 +248,23 @@ export default function GeminiChatWidget() {
             placeholder="Ask anything..."
             style={inputStyle}
             disabled={isLoading}
-            onKeyPress={(e) => { if (e.key === 'Enter' && !isLoading) handleSubmit(e); }} // Optional: Submit on Enter
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && !isLoading) handleSubmit(e);
+            }} // Optional: Submit on Enter
           />
           <button
             type="submit"
             disabled={isLoading}
-            style={{...buttonStyle, background: isLoading ? '#ccc' : '#007bff'}}
-            onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#0056b3')}
-            onMouseOut={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#007bff')}
+            style={{
+              ...buttonStyle,
+              background: isLoading ? "#ccc" : "#007bff",
+            }}
+            onMouseOver={(e) =>
+              !isLoading && (e.currentTarget.style.backgroundColor = "#0056b3")
+            }
+            onMouseOut={(e) =>
+              !isLoading && (e.currentTarget.style.backgroundColor = "#007bff")
+            }
           >
             Send
           </button>
